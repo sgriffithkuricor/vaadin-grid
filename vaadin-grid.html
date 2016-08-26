@@ -407,27 +407,31 @@ See the [demo](demo/index.html) for use case examples.
   }
 
   /* Sorting */
-  .vaadin-grid-header [class*="sort-"] {
+  .vaadin-grid-header .sortable {
     font-weight: 500;
     font-size: 12px;
     color: rgba(0, 0, 0, 0.87);
     position: relative;
   }
 
-  .vaadin-grid-header [class*="sort-"]:after {
+  .vaadin-grid-header .sortable:after {
     font-size: 8px;
     padding-left: 8px;
     width: 1em;
     min-width: 12px;
     display: inline-block;
+    content: url(img/arrow-up.svg);
+    opacity: 0.2;
   }
 
   .vaadin-grid-header .sort-asc:after {
     content: url(img/arrow-up.svg) " " attr(sort-order);
+    opacity: 0.9;
   }
 
   .vaadin-grid-header .sort-desc:after {
     content: url(img/arrow-down.svg) " " attr(sort-order);
+    opacity: 0.9;
   }
 
   /* Grid footer */
