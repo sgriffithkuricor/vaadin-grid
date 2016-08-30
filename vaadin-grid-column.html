@@ -114,21 +114,13 @@
       },
 
       _flexChanged: function(grid, flex) {
-        var index = grid.columns.indexOf(this);
-        if (grid.multiSelection && index === -1) {
-          grid.notifyPath('_columns.0.flex', flex);
-        } else {
-          grid.notifyPath('columns.' + index + '.flex', flex);
-        }
+        var index = grid._columns.indexOf(this);
+        grid.notifyPath('_columns.' + index + '.flex', flex);
       },
 
       _widthChanged: function(grid, width) {
-        var index = grid.columns.indexOf(this);
-        if (grid.multiSelection && index === -1) {
-          grid.notifyPath('_columns.0.width', width);
-        } else {
-          grid.notifyPath('columns.' + index + '.width', width);
-        }
+        var index = grid._columns.indexOf(this);
+        grid.notifyPath('_columns.' + index + '.width', width);
       }
     });
   </script>
