@@ -1,0 +1,116 @@
+<!doctype html>
+
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>iron-list test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="helpers.html">
+  <link rel="import" href="../vaadin-grid.html">
+</head>
+<body>
+
+  <dom-module id="x-grid">
+    <template>
+      <vaadin-grid id="grid" columns="{{columns}}" size="100">
+        <vaadin-grid-column>
+          <template>cell</template>
+          <template is="header">header1</template>
+          <template is="header" colspan="2">header2</template>
+          <template is="footer">footer1</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column>
+          <template>cell</template>
+          <template is="header">header3</template>
+          <template is="header">header4</template>
+          <template is="footer">footer2</template>
+        </vaadin-grid-column>
+      </vaadin-grid>
+    </template>
+    <script>
+    document.addEventListener('WebComponentsReady', function() {
+      Polymer({
+        is: 'x-grid',
+
+        properties: {
+          columns: Array
+        },
+
+        observers: ['_columnsChanged(columns.*)'],
+
+        _columnsChanged: function(e) {
+          if (e.path === 'columns') {
+            this.fire('columns-changed');
+          } else if (e.path.indexOf('columns.#0.') > -1)  {
+            var paths = e.path.split('.');
+            this[paths[2]] = e.value;
+          }
+        }
+      });
+    });
+    </script>
+  </dom-module>
+
+  <test-fixture id="grid">
+    <template>
+      <vaadin-grid size="100">
+        <vaadin-grid-column>
+          <template></template>
+          <template is="header"></template>
+        </vaadin-grid-column>
+        <vaadin-grid-column>
+          <template></template>
+          <template is="header"></template>
+        </vaadin-grid-column>
+      </vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <script>
+
+    describe('filtering', function() {
+      var grid;
+
+      beforeEach(function(done) {
+        grid = fixture('grid');
+        grid.dataSource = infiniteDataSource;
+
+        flush(done);
+      });
+
+      it('should set filters', function() {
+        grid.columns[0].filterBy = 'foo';
+        grid.columns[0].filterValue = 'bar';
+
+        expect(grid.filters).to.eql([{foo: 'bar'}]);
+      });
+
+      it('should set filters for multiple columns', function() {
+        grid.columns[0].filterBy = 'foo';
+        grid.columns[0].filterValue = 'bar';
+
+        grid.columns[1].filterBy = 'baz';
+        grid.columns[1].filterValue = 'qux';
+
+        expect(grid.filters).to.eql([{foo: 'bar'}, {baz: 'qux'}]);
+      });
+
+      it('should refresh data when filters change', function(done) {
+        grid.dataSource = function(opts, callback) {
+          expect(opts.filters).to.eql(grid.filters);
+          done();
+        };
+
+        grid.columns[0].filterBy = 'foo';
+        grid.columns[0].filterValue = 'bar';
+      });
+    });
+
+  </script>
+
+</body>
+</html>

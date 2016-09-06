@@ -212,8 +212,8 @@
         // make sure same page isn't requested multiple times.
         if (!this._pendingRequests[page] && this.dataSource) {
           this._pendingRequests[page] = true;
-          var opts = {page: page, pageSize: this.pageSize};
-          this.dataSource(opts, function(items) {
+          var params = {page: page, pageSize: this.pageSize, filters: this.filters};
+          this.dataSource(params, function(items) {
             this._cache[page] = items;
             delete this._pendingRequests[page];
             this._updateItems(page, items);
@@ -231,7 +231,7 @@
     /**
      * Clears the cached pages and reloads data from datasource when needed.
      */
-    clearCache: function() {
+    clearCache: function(pageSize) {
       this._cache = {};
       this._pendingRequests = {};
       this.$.scroller._update();

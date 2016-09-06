@@ -24,6 +24,8 @@
   <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
   <link rel="import" href="../../iron-icons/iron-icons.html">
 
+  <link rel="import" href="fps-meter.html">
+
 
   <style is="custom-style" include="demo-pages-shared-styles">
     :root {
@@ -71,6 +73,7 @@
 </head>
 
 <body unresolved>
+  <!-- <fps-meter></fps-meter> -->
   <style is="custom-style">
     vaadin-grid {
       --primary-color: #00b4f0;
@@ -102,6 +105,10 @@
             is: 'x-data-source',
 
             properties: {
+              size: {
+                value: 100,
+                notify: true
+              },
               dataSource: {
                 notify: true,
                 value: function() {
@@ -109,9 +116,23 @@
                     var items = new Array(opts.pageSize).fill(0).map(function(item, index) {
                       return window.getJSON('http://randomuser.me?index=' + (index + opts.page * opts.pageSize));
                     });
+                    var filtered = items.filter(function(item) {
+                      if (opts.filters.length > 0) {
+                        return opts.filters.filter(function(f) {
+                          return Polymer.Base.get(f.key, item).indexOf(f.value) === 0;
+                        }).length == opts.filters.length;
+                      } else {
+                        return true;
+                      }
+                    });
+                    console.log(filtered, items);
+                    if (opts.filters.length > 0) {
+                      this.size = filtered.length;
+                    }
 
-                    callback(items);
-                  };
+                    console.log(opts, filtered);
+                    callback(filtered);
+                  }.bind(this);
                 }
               }
             }
@@ -312,6 +333,31 @@
       </template>
     </demo-snippet>
 
+    <h3>Filtering</h3>
+    <demo-snippet>
+      <template>
+        <template is="dom-bind">
+          <x-data-source data-source="{{dataSource}}" size="{{size}}"></x-data-source>
+          <vaadin-grid data-source="[[dataSource]]" size="[[size]]">
+            <vaadin-grid-column width="50px">
+              <template is="header">#</template>
+              <template>[[index]]</template>
+            </vaadin-grid-column>
+            <vaadin-grid-column filter-by="user.name.first" filter-value="{{filterFirst}}">
+              <template is="header">
+                <paper-input value="{{filterFirst}}" label="First Name"></paper-input>
+              </template>
+              <template>[[item.user.name.first]]</template>
+            </vaadin-grid-column>
+            <vaadin-grid-column>
+              <template is="header">Last Name</template>
+              <template>[[item.user.name.last]]</template>
+            </vaadin-grid-column>
+          </vaadin-grid>
+        </template>
+      </template>
+    </demo-snippet>
+
     <h3>Selection</h3>
     <demo-snippet>
       <template>
@@ -324,7 +370,7 @@
             <template is="row-details">
               <div class="details">
                 <iron-image src="[[item.user.picture.large]]"></iron-image>
-                <p>Hi! My name is [[item.user.name.first]]!</p>
+                <p>Hi! My name is [[item.user.name.first]]! [[selected]]</p>
               </div>
             </template>
             <vaadin-grid-column width="50px">
@@ -333,7 +379,7 @@
             </vaadin-grid-column>
             <vaadin-grid-column>
               <template is="header">First Name</template>
-              <template>[[item.user.name.first]]</template>
+              <template>[[item.user.name.first]] [[selected]]</template>
             </vaadin-grid-column>
             <vaadin-grid-column>
               <template is="header">Last Name</template>

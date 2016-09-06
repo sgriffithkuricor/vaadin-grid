@@ -87,13 +87,16 @@
           value: 1
         },
 
+        filterBy: String,
+        filterValue: String,
+
         /**
          * Reference to the parent <vaadin-grid> element
          */
         grid: Object
       },
 
-      observers: ['_flexChanged(grid, flex)', '_widthChanged(grid, width)'],
+      observers: ['_flexChanged(grid, flex)', '_widthChanged(grid, width)', '_filtersChanged(grid, filterBy, filterValue)'],
 
       ready: function() {
         // when using Polymer bindings, default values trickle down using observers.
@@ -103,13 +106,24 @@
         this.fire('footers-changed', {value: this.footers});
       },
 
+      _indexOf: function(grid) {
+        return grid.columns.indexOf(this);
+      },
+
       _flexChanged: function(grid, flex) {
-        var index = grid.columns.indexOf(this);
+        var index = this._indexOf(grid);
         grid.notifyPath('columns.' + index + '.flex', flex);
       },
 
+      // for no reason in particular, only notify when both filterBy and filterValue are set.
+      _filtersChanged: function(grid, filterBy, filterValue) {
+        var index = this._indexOf(grid);
+        grid.notifyPath('columns.' + index + '.filterBy', filterBy);
+        grid.notifyPath('columns.' + index + '.filterValue', filterValue);
+      },
+
       _widthChanged: function(grid, width) {
-        var index = grid.columns.indexOf(this);
+        var index = this._indexOf(grid);
         grid.notifyPath('columns.' + index + '.width', width);
       }
     });

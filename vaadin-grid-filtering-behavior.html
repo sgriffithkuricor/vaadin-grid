@@ -1,0 +1,44 @@
+<script>
+  window.vaadin = window.vaadin || {};
+  vaadin.elements = vaadin.elements || {};
+  vaadin.elements.grid = vaadin.elements.grid || {};
+
+  vaadin.elements.grid.FilteringBehavior = {
+    properties: {
+
+      /**
+       * An array of filters being applied.
+       */
+      filters: {
+        type: Array,
+        value: function() {
+          return [];
+        }
+      }
+    },
+
+    observers: ['_columnFiltersChanged(columns.*)', '_filtersChanged(filters.*)'],
+
+    _columnFiltersChanged: function(e) {
+      if (e.path === 'columns' || e.path.indexOf('columns.#') > -1) {
+        this.filters = this.columns.filter(function(col) {
+          return col.filterBy !== undefined && col.filterValue !== undefined;
+        }).map(function(col) {
+          return {key: col.filterBy, value: col.filterValue};
+        });
+      }
+    },
+
+    _filtersChanged: function(e) {
+      // filters.length triggers always at the same with 'filter.splices' so
+      // we can optimize a bit by ignoring filters.length.
+      if (e.path === 'filters.length') {
+        return;
+      }
+
+      this.debounce('filters', function() {
+        this.clearCache();
+      }, 100);
+    }
+  };
+</script>

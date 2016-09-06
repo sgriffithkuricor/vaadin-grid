@@ -16,8 +16,6 @@
 
   <dom-module id="x-grid">
     <template>
-      <div id="flex">[[columns.0.flex]]</div>
-      <div id="width">[[columns.0.width]]</div>
       <vaadin-grid id="grid" columns="{{columns}}" size="100">
         <vaadin-grid-column>
           <template>cell</template>
@@ -47,10 +45,9 @@
         _columnsChanged: function(e) {
           if (e.path === 'columns') {
             this.fire('columns-changed');
-          } else if (e.path === 'columns.#0.flex') {
-            this.flex = e.value;
-          } else if (e.path === 'columns.#0.width') {
-            this.width = e.value;
+          } else if (e.path.indexOf('columns.#0.') > -1)  {
+            var paths = e.path.split('.');
+            this[paths[2]] = e.value;
           }
         }
       });
@@ -164,6 +161,16 @@
             column.width = '200px';
 
             expect(grid.$.scroller.$.footer._rows[0].cells[0].style.flexBasis).to.eql('200px');
+          });
+        });
+
+        describe('filterBy and filterValue', function() {
+          it('should notify changes to filterBy and filterValue', function() {
+            column.filterBy = 'name';
+            column.filterValue = 'value';
+
+            expect(container.filterBy).to.eql('name');
+            expect(container.filterValue).to.eql('value');
           });
         });
       });
