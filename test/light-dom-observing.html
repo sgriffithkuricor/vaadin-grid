@@ -1,0 +1,218 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="helpers.html">
+  <link rel="import" href="../vaadin-grid.html">
+  <style>
+    vaadin-grid {
+      height: 400px;
+      width: 800px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <test-fixture id="column">
+    <template>
+      <vaadin-grid-column>
+        <template class="header">some header</template>
+        <template class="footer">some footer</template>
+        <template>some body [[item.value]]</template>
+      </vaadin-grid-column>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="columns-empty">
+    <template>
+      <vaadin-grid size="1000"></vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="columns-some">
+    <template>
+      <vaadin-grid size="1000">
+        <vaadin-grid-column>
+          <template class="header">first header</template>
+          <template class="footer">first footer</template>
+          <template>first body [[item.value]]</template>
+        </vaadin-grid-column>
+        <vaadin-grid-column>
+          <template class="header">second header</template>
+          <template class="footer">second footer</template>
+          <template>second body [[item.value]]</template>
+        </vaadin-grid-column>
+      </vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="columns-dom-repeat">
+    <template is="dom-template">
+      <vaadin-grid id="grid" size="1000">
+        <template is="dom-repeat" id="repeater" items="[[columns]]" as="column">
+          <vaadin-grid-column>
+            <template class="header">[[column]] header</template>
+            <template class="footer">[[column]] footer</template>
+            <template>[[column]] body [[item.value]]</template>
+          </vaadin-grid-column>
+        </template>
+      </vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="columns-dom-repeat-in-group">
+    <template is="dom-template">
+      <vaadin-grid size="1000">
+        <vaadin-grid-column-group>
+          <template is="dom-repeat" items="[[columns]]" as="column">
+            <vaadin-grid-column>
+              <template class="header">group [[column]] header</template>
+              <template class="footer">group [[column]] footer</template>
+              <template>group [[column]] body [[item.value]]</template>
+            </vaadin-grid-column>
+          </template>
+        </vaadin-grid-column-group>
+      </vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="group-dom-repeat">
+    <template is="dom-template">
+      <vaadin-grid size="1000">
+        <template is="dom-repeat" items="[[columns]]" as="column">
+          <vaadin-grid-column-group>
+            <vaadin-grid-column>
+              <template class="header">group repeat [[column]] header</template>
+              <template class="footer">group repeat [[column]] footer</template>
+              <template>group repeat [[column]] body [[item.value]]</template>
+            </vaadin-grid-column>
+          </vaadin-grid-column-group>
+        </template>
+      </vaadin-grid>
+    </template>
+  </test-fixture>
+
+  <script>
+    describe('light dom observing', function() {
+      var grid, scroller, header, body, footer, headerRows, bodyRows, footerRows, repeater;
+      var columns = 'a b c'.split(' ');
+
+      function init(fixtureName, data) {
+        grid = fixture(fixtureName, data);
+        repeater = Polymer.dom(grid).querySelector('template[is="dom-repeat"]');
+        scroller = grid.$.scroller;
+        header = scroller.$.header;
+        body = scroller.$.items;
+        footer = scroller.$.footer;
+        headerRows = getRows(header);
+        footerRows = getRows(footer);
+        bodyRows = getRows(body);
+        grid.dataSource = infiniteDataSource;
+      }
+
+      function expectFirstColumn(columnName) {
+        expect(getCellContent(headerRows[0].cells[0]).textContent).to.contain(columnName + ' header');
+        expect(getCellContent(bodyRows[0].cells[0]).textContent).to.contain(columnName + ' body foo0');
+        expect(getCellContent(footerRows[0].cells[0]).textContent).to.contain(columnName + ' footer');
+      }
+
+      function expectNumberOfColumns(number) {
+        expect(headerRows[0].cells.length).to.be.equal(number);
+        expect(bodyRows[0].cells.length).to.be.equal(number);
+        expect(footerRows[0].cells.length).to.be.equal(number);
+      }
+
+      describe('generic operations', function() {
+        describe('adding', function() {
+          beforeEach(function() {
+            init('columns-empty');
+          });
+
+          it('should support adding columns late', function(done) {
+            var column = fixture('column');
+            Polymer.dom(grid).appendChild(column);
+
+            grid.async(function() {
+              expectFirstColumn('some');
+              done();
+            });
+          });
+        });
+
+        describe('removing', function() {
+          beforeEach(function() {
+            init('columns-some');
+          });
+
+          it('should support removing columns late', function(done) {
+            var column = Polymer.dom(grid).querySelector('vaadin-grid-column');
+            Polymer.dom(grid).removeChild(column);
+
+            grid.async(function() {
+              expectFirstColumn('second');
+              done();
+            });
+          });
+        });
+      });
+
+      function shouldSupportDomRepeat(prefix) {
+        it('should provide initial state', function() {
+          expectFirstColumn(prefix + 'a');
+          expectNumberOfColumns(3);
+        });
+
+        it('should add columns late', function() {
+          repeater.unshift('items', 'd');
+          repeater.render();
+          expectFirstColumn(prefix + 'd');
+          expectNumberOfColumns(4);
+        });
+
+        it('should remove columns late', function() {
+          repeater.shift('items');
+          repeater.render();
+          expectFirstColumn(prefix + 'b');
+          expectNumberOfColumns(2);
+        });
+      }
+
+      describe('columns dom-repeat', function() {
+        describe('inside grid', function() {
+          beforeEach(function() {
+            init('columns-dom-repeat', {columns: columns});
+          });
+
+          shouldSupportDomRepeat('');
+        });
+
+        describe('inside group', function() {
+          beforeEach(function() {
+            // init('columns-dom-repeat-in-group', {columns: columns});
+          });
+
+          // shouldSupportDomRepeat('group ');
+        });
+      });
+
+      describe('group dom-repeat', function() {
+        beforeEach(function() {
+          // init('group-dom-repeat', {columns: columns});
+        });
+
+        // shouldSupportDomRepeat('group repeat ');
+      });
+    });
+  </script>
+
+</body>
+
+</html>
